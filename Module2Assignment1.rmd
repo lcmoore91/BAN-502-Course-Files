@@ -1,0 +1,112 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+850435436
+Module 2 Assignment 1
+
+```{r}
+library(GGally)
+library(tidyverse)
+
+```
+
+
+Task 1
+```{r Task 1}
+air = airquality
+head(air)
+```
+
+A. This dataset has figures concerning the ozone, solar, wind, temp, month and day.
+
+B. This dataset has 153 observations and 6 variables.
+
+C. There is mising data in the following variables: 'Ozone' and 'Solar.R'.
+
+D. Ozone is likely the (Y) variable.  This variable is dependent on the other variables listed.
+
+
+
+Task 2
+```{r Task 2}
+air2 = air %>% filter(!is.na(Ozone)) %>% filter(!is.na(Solar.R))
+head(air2)
+```
+The new dataset, air2, contains 111 rows (observations) and 6 columns (variables)
+
+
+
+Task 3
+```{r Task 3}
+ggpairs(air2)
+ggcorr(air2, label = TRUE)
+```
+
+A. The variable that is most strongly correlated with the 'Ozone' variable is the 'Temp' variable.
+
+B. The variable that is least strongly correlated with the 'Ozone' variable is the 'Day' variable.
+
+
+Task 4
+```{r Task 4}
+ggplot(air2, aes(x=Temp, y=Ozone))+
+  geom_point()
+```
+There is a slight, positive relationshio between these two variables.  As the 'temp' increases, the 'ozone' figure increases gradually.
+
+Task 5
+```{r}
+model1 = lm(formula = Ozone~Temp, data = air2)
+summary(model1)
+confint(model1)
+```
+
+A. The R squared value is relatively, at 0.488.  Since the coefficient is low (2.91) there isn't a large correalation between these two.
+
+B. The slope conefficient will likely fall between 1.96 and 2.91, looking at a 95% confidence interval.
+
+Task 6
+```{r}
+ggplot(air2, aes(x=Temp, y=Ozone))+
+  geom_point()+
+geom_smooth(method = "lm", se = FALSE)
+```
+
+
+Task 7
+```{r}
+#Manual
+#-147.65+2.44*80=
+#Prediction 47.55
+
+```
+
+
+Task 8
+```{r}
+ggplot(air2, aes(x=Day, y=Ozone))+
+  geom_point()
+```
+There is no relationship between the two variables "Day" and "Ozone".  This shows a 0.0 correlation.
+
+Task 9
+```{r}
+model2=lm(formula = Ozone~Day, data = air2)
+summary(model2)
+confint(model2)
+```
+
+A. The quality of this model is not great.  The correalation itself is is basically 0, the R squared value is larger than that of model1, and the intercept is lower, but the data doesnt lend itself to telling a story of a relationship between"Day" and "Ozone".
+
+B.  The slope coefficient will likely fall between -0.75 and 0.71, in a 95% confidence interval.
+
+Task 10
+```{r}
+ggplot(air2, aes(x=Day, y=Ozone))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+```
+
