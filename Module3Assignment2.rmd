@@ -1,0 +1,191 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+
+850435436
+
+Module 3 Assignment 2
+
+```{r}
+library(tidyverse)
+library(MASS)
+library(caret)
+library(ROCR)
+
+
+parole = read.csv("parole.csv")
+parole = parole %>% mutate(male = as_factor(as.character(male))) %>% mutate(male = fct_recode(male,
+    "male" = "1",
+    "female" = "0"))
+parole = parole %>% mutate(race = as_factor(as.character(race))) %>% mutate(race = fct_recode(race,
+    "white" = "1",
+    "otherwise" = "2"))
+
+parole = parole %>% mutate(age = as_factor(as.character(age))) 
+
+parole = parole %>% mutate(state = as_factor(as.character(state))) %>% mutate(state = fct_recode(state,
+    "Any other state" = "1",
+    "kentucky" = "2",
+    "Louisiana" = "3",
+    "Virginia" = "4"))
+
+parole = parole %>% mutate(time.served = as_factor(as.character(time.served)))
+
+parole = parole %>% mutate(max.sentence = as_factor(as.character(max.sentence))) 
+
+parole = parole %>% mutate(multiple.offenses = as_factor(as.character(multiple.offenses))) %>% mutate(multiple.offenses = fct_recode(multiple.offenses,
+    "Yes" = "1",
+    "No" = "0"))
+
+
+parole = parole %>% mutate(crime = as_factor(as.character(crime))) %>% mutate(crime = fct_recode(crime,
+    "Any other crime" = "1",
+    "Larceny" = "2",
+    "Drug-related" = "3",
+    "Driving-related" = "4"))
+
+parole = parole %>% mutate(violator = as_factor(as.character(violator))) %>% mutate(violator = fct_recode(violator,
+    "Yes" = "1",
+    "No" = "0"))
+```
+
+
+Task 1
+```{r}
+set.seed(12345)
+train.rows = createDataPartition(y = parole$violator, p=0.7, list = FALSE)
+train = parole[train.rows,]
+test = parole[-train.rows,]
+```
+
+
+```{r}
+summary(train)
+summary(test)
+```
+
+
+Task 2
+```{r}
+ggplot(parole, aes(x=male, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=race, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=age, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=state, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=time.served, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=max.sentence, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=multiple.offenses, fill=violator))+geom_bar()+theme_bw()
+ggplot(parole, aes(x=crime, fill=violator))+geom_bar()+theme_bw()
+
+t1 = table(parole$violator, parole$age)
+prop.table(t1, margin = 2)
+
+t2 = table(parole$violator, parole$time.served)
+prop.table(t2, margin = 2)
+
+
+```
+
+After creating a visualization of the data to see what is a good predictor, i came up with the following:
+For the male variable, it is more likely a male will violate parole than a female.  This comes as no surprise since there about three times as many males on parole compared to females.  Race does not predict whether a parolee will violate their parole. Moving onto age, it appears the younger you are, the more likely you are to violate parole.  State is an odd variable here.  Any other state, Kentucky, and Virginia are relatively the same.  For some reason, Louisiana is distinctly higher at those who violate parole.  Time served does not provide a good predictor of if a parolee will violate their parole.  The max sentence variable appears that those with 12 has a much higher rate of vioalting parole than all the others.  Those with multiple offenses is almost twice as likely to violate parole. And finally, those who commit 'any other crime' is more likely to violate parole than 'driving-related', 'drug-related', or 'larceny'.
+
+
+Task 3
+```{r}
+mod1 = glm(violator ~ multiple.offenses+male+state, train, family = "binomial")
+summary(mod1)
+```
+I created a logistic regression model that included what i thought was the three highest predictors to see what looks the best.  will the P value for the state of Virginia is the highest, that state also has the most parolees.  i think the those with multiple offenses is the best, given the 1.27 p score.
+
+
+```{r}
+allmod = glm(violator ~., train, family = "binomial")
+summary(allmod)
+
+emptymod = glm(violator ~1, train, family = "binomial")
+summary(emptymod)
+```
+
+
+Task 4
+```{r}
+forwardmod = stepAIC(emptymod, direction = "forward", scope = list(upper=allmod, lower=emptymod), trace = TRUE)
+summary(forwardmod)
+```
+Using forward stepwise, it appears the state is the best predictor based on the AIC score being lower (283.18).   To better predict if a parolee will violoate parole, the combinaction of  state, multiple.offenses, and race wil give you are better indication, based on the AIC score being lower (258.98).
+
+
+Task 5
+```{r}
+mod2 = glm(violator ~ multiple.offenses+race+state, train, family = "binomial")
+summary(mod2)
+```
+The AIC for this is 258.98, meaning the qaulity of this model is good.  the Virginia variable is the most significant, with those with multiple offense second.  Race is the leasr significant of these variables.
+
+Task 6
+```{r}
+newdata = data.frame(state= "Louisiana", multiple.offenses = "Yes", race= "white")
+predict(forwardmod, newdata, type = "response")
+```
+
+33% chance of parole 1 violating parole.
+```{r}
+newdata = data.frame(state= "kentucky", multiple.offenses = "No", race= "otherwise")
+predict(forwardmod, newdata, type = "response")
+```
+20% chance of parole 2 violating parole.
+
+
+Task 7
+
+```{r}
+predictions = predict(forwardmod, type="response")
+head(predictions)
+```
+
+```{r}
+ROCRpred=prediction(predictions, train$violator)
+
+ROCRperf = performance(ROCRpred, "tpr", "fpr")
+plot(ROCRperf, colorize=TRUE, print.cutoffs.at=seq(0,1,by=0.1), text.adj=c(-0.2,1.7))
+```
+
+
+Task 8
+```{r}
+opt.cut = function(perf, pred){
+  cut.ind = mapply(FUN=function(x, y, p){
+    d = (x-0)^2+ (y-1)^2
+    ind= which(d==min(d))
+    c(sensitivity= y[[ind]], specificity=1-x[[ind]],
+      cutoff = p[[ind]])
+  }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+print(opt.cut(ROCRperf, ROCRpred))
+```
+
+Task 9
+```{r}
+t3=table(train$violator, predictions > 0.2069629)
+t3
+(t3[1,1]+t3[2+2])/nrow(train)
+```
+
+```{r}
+t3 = table(train$violator, predictions > 0.5)
+t3
+(t3[1,1]+t3[2+2])/nrow(train)
+```
+
+```{r}
+t3 = table(train$violator, predictions > 0.6)
+t3
+(t3[1,1]+t3[2+2])/nrow(train)
+```
+
+THe probability threshold that best maximizes the accuracy os 0.5.
+
+Task 10
+The accuracy of the probability used in task 9 (0.5) is 0.8964.

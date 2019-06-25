@@ -1,0 +1,102 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+
+850435436
+
+Module 3 Assignemnt 1
+
+```{r}
+library(tidyverse)
+library(MASS)
+library(caret)
+
+bike = read.csv("hour.csv")
+
+bike = bike %>% mutate(season = as_factor(as.character(season))) %>% mutate(season = fct_recode(season,
+    "Spring" = "1",
+    "Summer" = "2",
+    "Fall" = "3",
+    "Winter" = "4"))
+
+bike = bike %>% mutate(yr = as_factor(as.character(yr)))
+
+bike = bike %>% mutate(mnth = as_factor(as.character(mnth))) 
+
+bike = bike %>% mutate(hr = as_factor(as.character(hr))) 
+
+bike = bike %>% mutate(holiday = as_factor(as.character(holiday))) %>% mutate(holiday = fct_recode(holiday,
+    "NotWorkingDay" = "0",
+    "WorkingDay" = "1"))
+
+bike = bike %>% mutate(weathersit = as_factor(as.character(weathersit))) %>% mutate(weathersit = fct_recode(weathersit,
+    "NoPrecip" = "1",
+    "Misty" = "2",
+    "LightPrecip" = "3",
+    "HeavyPrecip" = "4"))
+
+bike = bike %>% mutate(weekday = as_factor(as.character(weekday))) %>% mutate(weekday = fct_recode(weekday,
+    "Sunday" = "0",
+    "Monday" = "1",
+    "Tuesday" = "2",
+    "Wednesday" = "3",
+    "Thursday" = "4",
+    "Friday" = "5",
+    "Saturday" = "6"))
+
+head(bike)
+
+```
+
+
+Task 1
+```{r}
+set.seed(1234)
+train.rows= createDataPartition(y= bike$instant, p=0.7, list = FALSE)
+train = bike[train.rows,]
+test = bike[-train.rows,]
+```
+
+Task 2
+```{r}
+summary(test)
+
+summary(train)
+```
+The training set has 12,167 rows and the testing set has 283,276 rows.
+
+
+Task 3
+```{r}
+model1 = lm(count~season+yr+mnth+hr+holiday+weekday+temp+weathersit, data = bike)
+summary(model1)
+```
+
+The r-quared value for model1 is 0.6821.  This is good for two reason: it is relatively higher (on the range from 0% to 100%) but also not so close to 100% tha tthe data is overfit.
+
+Task 4
+```{r}
+predictions = predict(model1, type = "response")
+head(predictions)
+```
+
+
+Task 5
+```{r}
+predictions = predict(model1, type = "response")
+head(predictions)
+```
+Task 6
+```{r}
+testlm = lm(count~., data = test)
+```
+
+
+
+Task 7
+In K-fold cross validation, the sample is randomly broken up into equal parts.  From there, one of the parts is used for testing the model, while the other parts are used for training.  Once the cross validation is completed for each part,  the results to be averaged into a single estimation.
+
+In traditional training/testing splitting, if you split the you only are getting accuracy for that portion of the data and not the entire set. Whereas k-fold takes the full data set into account when the final estimation is arrived at.

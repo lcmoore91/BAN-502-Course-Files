@@ -1,0 +1,107 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+
+850435436
+
+Module 4 Assignment 2
+
+```{r}
+options(tidyverse.quiet = TRUE)
+library(tidyverse)
+library(caret)
+library(ranger)
+```
+
+```{r}
+Blood = read.csv("Blood.csv")
+Blood = Blood %>% mutate(DonatedMarch = as_factor(as.character(DonatedMarch))) %>%
+  mutate(DonatedMarch = fct_recode(DonatedMarch,
+                                   "Yes" = "1",
+                                   "No" = "0"))
+```
+
+
+Task 1
+```{r}
+set.seed(1234)
+train.rows = createDataPartition(y = Blood$DonatedMarch, p=0.7, list = FALSE)
+train = Blood[train.rows,]
+test = Blood[-train.rows,]
+```
+
+
+Task 2
+```{r}
+fit_control = trainControl(method = "cv",
+                           number = 10)
+
+set.seed(123)
+rf_fit = train(x=Blood[,-5], y=Blood$DonatedMarch,
+               method = "ranger",
+               importance= "permutation",
+               trControl = fit_control,
+               num.trees = 100)
+```
+
+
+Task 3
+```{r}
+varImp(rf_fit)
+rf_fit
+```
+Total_Donated is the most important variable.  Mnths_Since_First is the least important.
+
+
+Task 4
+```{r}
+predRF = predict(rf_fit, Blood)
+head(predRF)
+```
+
+
+Task 5
+```{r}
+confusionMatrix(predRF, Blood$DonatedMarch, positive = "Yes")
+
+```
+The accuracy of the model is 0.8904.  The sensitivity of the model is 0.5843 and the specificity of the model is 0.9860.
+
+Task 6
+
+This model is not overfit, being at 0.8904.  While that is high, it is not too high and a very usable model to predict if a person donated blood in March.
+
+Task 7
+```{r}
+predRF2 = predict(rf_fit, test)
+head(predRF2)
+```
+
+
+```{r}
+confusionMatrix(predRF2, test$DonatedMarch, positive = "Yes")
+```
+The accuracy of the model with the test set is not quite as high, just at 0.8795.
+
+Task 8
+
+A real-world use for this model would be a retaurant. They could predict the likiness of if a customer would return to their restaurant.  The restaurant conducts a short five question surveyand then use the variables: which day the customer orginially visited, if they liked their food, liked their service, total of their bill, and if they would return again.  Looking at each of these variables, with the response variable being the "if they would return again", the management team could look at what really matters to the customers.  I would reccomend this model for real-world use.  The model is not overfit, and takes into account all variables within the data set.   The one concern I would have with this model is if the data set became too large, you could be waiting a while for the results.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

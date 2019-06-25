@@ -1,0 +1,180 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+
+850435436
+
+Module 6 Assignment 1
+
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+```
+
+```{r}
+trucks = read_csv("trucks.csv")
+```
+
+Task 1
+```{r}
+ggplot(trucks, aes(x=Distance, y=Speeding))+geom_point()
+
+```
+
+
+It seems as if there is some clustering occuring when looking at the relationship of the variables distance and speeding.  For those who drove under, lets say roughly 80 miles, there are two clusters, one cluster under 12% of the time speeding. And the second clustering for those about 12% of the their time speeding while the distance was under that 80 mile mark.  The other cluster is for those who drove between 150-250 miles.  This cluster is that they sped under 25% of their time.
+
+
+Task 2
+```{r}
+trucks2 = trucks [,-1]
+
+trucks2 = as.data.frame(scale(trucks2))
+
+summary(trucks2)
+```
+
+
+Task 3
+```{r}
+set.seed(1234)
+clusters1 = kmeans(trucks2, 2)
+```
+
+
+```{r}
+fviz_cluster(clusters1, trucks2)
+```
+
+The clusters split those who speed more, vs those who speed less.  Splitting into clusters into two actually shows now relationship between the distance and speeding variables.
+
+
+Task 4
+
+```{r}
+set.seed(123)
+fviz_nbclust(trucks2, kmeans, method = "wss")
+```
+
+
+```{r}
+set.seed(123)
+fviz_nbclust(trucks2, kmeans, method = "silhouette")
+```
+
+Yes, there is a consensus optimal number of clusters are running these two methods.  Optimal number of clusters is 4.
+
+
+Task 5
+```{r}
+set.seed(1234)
+clusters2 = kmeans(trucks2, 4)
+```
+
+
+```{r}
+fviz_cluster(clusters2, trucks2)
+```
+
+Task 6
+
+Splitting into four clusters help get to a more granular level.  The cluster closest to the x and y axis (blue) shows those who travel a short distance, do not speed.  THen once you move along the x axis, you see the green cluster for those who travel more than the blue cluster, that also do not speed as much.  moving up from there, you will get another cluster (purple) of those travelling roughly the same distance as the green cluster, who tend to speed more.  and finally the red cluster, which stretches from on top of the blue cluster and the purple cluster, which shows the more someone travels in this cluster, the more likely they are to speed.  Breaking into these segments can help see if there is a common trait these drivers share, maybe routes or traffic can play a role in the speeding.
+
+
+
+Task 7
+```{r}
+
+wine = read_csv("wineprice.csv")
+```
+
+
+```{r}
+wine2 = wine [,-1]
+wine2 = wine2[,-6]
+
+wine2 = as.data.frame(scale(wine2))
+
+```
+
+
+Task 7
+```{r}
+set.seed(123)
+fviz_nbclust(wine2, kmeans, method = "wss")
+```
+
+
+```{r}
+set.seed(123)
+fviz_nbclust(wine2, kmeans, method = "silhouette")
+```
+Yes, there is a consensus optimal number of clusters are running these two methods.  Optimal number of clusters is 5.
+
+
+Task 8
+```{r}
+set.seed(1234)
+clusters3 = kmeans(wine2, 5)
+```
+
+```{r}
+fviz_cluster(clusters3, wine2)
+```
+
+
+Task 9
+```{r}
+
+m = c("average", "single", "complete", "ward")
+names(m) = c("average", "single", "complete", "ward")
+
+ac = function(x) {
+  agnes(wine2, method = x)$ac
+}
+map_dbl(m, ac)
+              
+
+```
+
+
+```{r}
+hc2 = agnes(wine2, method = "ward")
+pltree(hc2, cex = 0.6, hang = -1, main = "Agglomerative Dendrogram")
+```
+
+
+Task 10
+```{r}
+
+hc3 = diana(wine2)
+pltree(hc3, cex = 0.6, hang = -1, main = "Divisive Dendrogram")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,189 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+Levi Moore
+
+850435436
+
+Assign 1 Module 4
+
+```{r}
+library(tidyverse)
+library(caret)
+library(rpart)
+library(rattle)
+library(RColorBrewer)
+```
+
+```{r}
+parole = read.csv("parole.csv")
+parole = parole %>% mutate(male = as_factor(as.character(male))) %>% mutate(male = fct_recode(male,
+    "male" = "1",
+    "female" = "0"))
+parole = parole %>% mutate(race = as_factor(as.character(race))) %>% mutate(race = fct_recode(race,
+    "white" = "1",
+    "otherwise" = "2"))
+
+
+parole = parole %>% mutate(state = as_factor(as.character(state))) %>% mutate(state = fct_recode(state,
+    "Any other state" = "1",
+    "kentucky" = "2",
+    "Louisiana" = "3",
+    "Virginia" = "4"))
+
+parole = parole %>% mutate(time.served = as_factor(as.character(time.served)))
+
+parole = parole %>% mutate(max.sentence = as_factor(as.character(max.sentence))) 
+
+parole = parole %>% mutate(multiple.offenses = as_factor(as.character(multiple.offenses))) %>% mutate(multiple.offenses = fct_recode(multiple.offenses,
+    "Yes" = "1",
+    "No" = "0"))
+
+
+parole = parole %>% mutate(crime = as_factor(as.character(crime))) %>% mutate(crime = fct_recode(crime,
+    "Any other crime" = "1",
+    "Larceny" = "2",
+    "Drug-related" = "3",
+    "Driving-related" = "4"))
+
+parole = parole %>% mutate(violator = as_factor(as.character(violator))) %>% mutate(violator = fct_recode(violator,
+    "Yes" = "1",
+    "No" = "0"))
+
+
+
+```
+
+
+Task 1
+```{r}
+set.seed(12345)
+train.rows = createDataPartition(y = parole$violator, p=0.7, list = FALSE)
+train = parole[train.rows,]
+test = parole[-train.rows,]
+summary(train)
+
+```
+
+
+
+Task 2
+```{r}
+tree1 = rpart(violator ~ age + state + max.sentence, train, method = "class")
+fancyRpartPlot(tree1)
+```
+
+
+Task 3
+
+The first question of the tree is which state, so the example is the person is from Louisiana, the answer is no.  Move to the next question and max.sentence equals 1, 2, 4, or 8.  Since 5 is the example, move to the right (for no).  The next is another max sentence question; does it equal 9, 11, 12, or 18.  The answer again is no, and if you move to the right, you arrive at the answer that that person would be likely to violate parole.
+
+
+Task 4
+```{r}
+printcp(tree1)
+plotcp(tree1)
+```
+
+The cp value that should be selected is 0.017.
+
+
+Task 5
+```{r}
+root = rpart(violator ~ age + state + max.sentence, train, cp=0.17, method = "class")
+```
+
+```{r}
+summary(tree1)
+```
+Node number 1 has the most observations, with 473.
+
+Task 6
+```{r}
+treepred = predict(tree1, train, type = "class")
+head(treepred)
+confusionMatrix(treepred, train$violator, positive = "Yes")
+```
+Accuracy is 0.8985
+Sensitivity is 0.34545
+Specificity is 0.97129
+
+
+Task 7
+```{r}
+treepred = predict(tree1, test, type = "class")
+head(treepred)
+confusionMatrix(treepred, test$violator, positive = "Yes")
+```
+
+Accuracy is 0.8911
+Sensitivity is 0.34783
+Specificity is 0.96089
+
+Task 9
+```{r}
+Blood = read.csv("Blood.csv")
+Blood = Blood %>% mutate(DonatedMarch = as_factor(as.character(DonatedMarch))) %>% mutate(DonatedMarch = fct_recode(DonatedMarch,
+    "Yes" = "1",
+    "No" = "0"))
+
+
+set.seed(1234)
+train.rows2 = createDataPartition(y = Blood$DonatedMarch, p=0.7, list = FALSE)
+train2 = Blood[train.rows,]
+test2 = Blood[-train.rows,]
+summary(train2)
+
+
+```
+
+
+```{r}
+tree2 = rpart(DonatedMarch ~ Mnths_Since_Last + TotalDonations + Total_Donated + Mnths_Since_First, train2, method = "class")
+fancyRpartPlot(tree2)
+```
+
+
+```{r}
+printcp(tree2)
+plotcp(tree2)
+```
+
+```{r}
+tree2 = rpart(DonatedMarch ~ Mnths_Since_Last + TotalDonations + Total_Donated + Mnths_Since_First, train2, cp = 0.01, method = "class")
+fancyRpartPlot(tree2)
+```
+
+```{r}
+treepred2 = predict(tree2, train2, type = "class")
+head(treepred2)
+confusionMatrix(treepred2, train2$DonatedMarch, positive = "Yes")
+```
+
+
+
+```{r}
+treepred2 = predict(tree2, test2, type = "class")
+head(treepred2)
+confusionMatrix(treepred2, test2$DonatedMarch, positive = "Yes")
+
+```
+
+
+Chose 0.01 for the optimal cp for this classification tree.  After looking at the confustion matrix for both the test and train sets, the accuracy of these predictions is relatively low, 0.7927 for test set and 0.8034 for train set.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
